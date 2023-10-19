@@ -7,6 +7,7 @@ import { createConnection } from 'mysql2';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import passport from 'passport';
+import LocalStrategy from 'passport-local';
 
 const app = express();
 app.use(cors());
@@ -21,7 +22,6 @@ const dbUser = process.env.DB_USER;
 const dbPass = process.env.DB_PASS;
 const dbDatabase = process.env.DB_DB;
 const dbPort = process.env.DB_PORT;
-
 const db = createConnection({
     host: dbHost,
     user: dbUser,  
@@ -29,7 +29,6 @@ const db = createConnection({
     database: dbDatabase,
     port: dbPort
 });
-
 db.connect((err) => {
     if (err) {
         console.error(err.message);
@@ -42,7 +41,7 @@ db.connect((err) => {
 
 
 // CREATING A USER
-app.post('/ api/login', (req, res) => {
+app.post('/api/login', (req, res) => {
     console.log("Login");
 })
 
@@ -51,10 +50,19 @@ app.post('/api/register', async (req, res) => {
         if (!req.body.password) {
             return res.status(400).json({ message: 'Password is required!' })
         }
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const userName = req.body.username
+        const userEmail = req.body.email
+        const sql = `INSERT INTO blog_users(username, email, password_hash) VALUES ('${userName}', '${userEmail}', '${hashedPassword}')`
 
-        const hashedPassword = bcrypt.hash(req.body.password, 10);
-        console.log("Success!")
-
+        db.query(sql, (err, result) => {
+            if (err) {
+                console.error("ERROR: ", err.message);
+                res.status(500).send("Error");
+            } else {
+                res.json(result);
+            }
+        })
     } catch (error) {
         res.status(500).json({ message: 'Error during registration!' })
     }

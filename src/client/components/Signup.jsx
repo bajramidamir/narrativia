@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link, redirect, redirectDocument } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Signup = () => {
 
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,7 +19,8 @@ const Signup = () => {
 
             if (response.ok) {
                 console.log("Registration successful!");
-                redirectDocument('/login')
+                navigate('/login');
+                
             } else {
                 console.error("Registration error")
             }
