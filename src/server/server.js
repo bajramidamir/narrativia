@@ -78,12 +78,11 @@ passport.deserializeUser((id, done) => {
 });
 
 function isLoggedIn(req, res, next) {
-    if (req.isAuthenticated()) {
-      return next();
-    }
-    res.redirect('/login');
+  if (req.isAuthenticated()) {
+    return next();
   }
-
+  res.redirect("/login");
+}
 
 // LOCAL STRATEGY CONFIG
 passport.use(
@@ -105,7 +104,7 @@ passport.use(
 );
 
 // LOGIN AND SIGNUP
-app.post("/api/login", async (req, res, next) => {
+app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   db.query(
     "SELECT * FROM blog_users WHERE email = ?",
@@ -128,14 +127,19 @@ app.post("/api/login", async (req, res, next) => {
           return res.status(500).json({ message: "Internal server error" });
         }
         if (result) {
-            console.log('All is good!')
-            passport.authenticate("local", {
-            successRedirect: "/userHome",
-            failureRedirect: "/login",
-            failureFlash: true,
+          req.login(user, (err) => {
+            if (err) {
+              console.error("Error logging in:", err);
+              return res.status(500).json({ message: "Internal server error" });
+            }
+            console.log("All is good!");
+            return res.redirect("http://localhost:5173/userHome");
           });
         } else {
           console.log("Wrong password!");
+          return res
+            .status(401)
+            .json({ message: "Incorrect email or password" });
         }
       });
     }
@@ -165,9 +169,15 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-app.get('/userHome', isLoggedIn, (req, res) => {
-    
+app.get('/api/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.error('Error during logout:', err);
+      return res.status(500).json({ message: 'Logout failed' });
+    }
+    res.redirect('http://localhost:5173/');
   });
+});
 
 app.listen(serverPort, () => {
   console.log(`Server is running on port ${serverPort}`);
